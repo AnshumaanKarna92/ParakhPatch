@@ -17,6 +17,7 @@ RUN apt-get update --fix-missing && apt-get install -y --fix-missing \
 COPY requirements.txt .
 # Ensure correct line endings before pip install
 RUN dos2unix requirements.txt
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .

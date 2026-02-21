@@ -5,6 +5,7 @@ pymongo==4.6.1
 requests==2.31.0
 groq
 google-generativeai
+cohere==5.1.9
 pathway[xpack-llm]
 litellm
 numpy<2.0
