@@ -1,0 +1,13 @@
+fastapi==0.109.0
+uvicorn==0.27.0
+python-dotenv==1.0.1
+pymongo==4.6.1
+requests==2.31.0
+groq
+google-generativeai
+pathway[xpack-llm]
+litellm
+numpy<2.0
+scikit-learn==1.3.2
+joblib==1.3.2
+aiohttp

@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: predictive_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: predictive_backend
+    ports:
+      - "8000:8000"
+      - "8081:8081"
+    depends_on:
+      - mongodb
+    env_file:
+      - .env
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/
+      - STREAM_URL=${STREAM_URL:-https://optical-readers-graphics-northeast.trycloudflare.com/stream}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+      args:
+        # Build-time argument for React
+        - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8000}
+    container_name: predictive_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mongo_data:

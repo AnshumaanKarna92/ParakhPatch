@@ -1,0 +1,11 @@
+node_modules
+build
+dist
+__pycache__
+.git
+.env
+venv
+.vscode
+*.pyc
+dashboard/node_modules
+dashboard/build
