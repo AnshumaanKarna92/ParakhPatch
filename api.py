@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 import requests
 import json
 import time
+import math
+import random
 from pathway_llm import pathway_rag_service
 
 load_dotenv()
@@ -74,6 +76,39 @@ if not model: model = MockModel()
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
+_synthetic_t = 0
+
+def _gen_synthetic():
+    global _synthetic_t
+    _synthetic_t += 1
+    t = _synthetic_t
+    temp = 68 + 12 * math.sin(t / 15) + (random.random() - 0.5) * 4
+    vib  = 0.35 + 0.18 * abs(math.sin(t / 8)) + (random.random() - 0.5) * 0.06
+    hum  = 44 + 8 * math.cos(t / 20) + (random.random() - 0.5) * 2
+    rssi = -58 + random.randint(-5, 5)
+    risk = min(0.95, max(0.02, (temp - 60) / 60 + vib / 1.5 - 0.1 + (random.random() - 0.5) * 0.05))
+    if risk > 0.8:
+        msg = f"🔴 CRITICAL: Risk {risk*100:.0f}%!"
+    elif risk > 0.4:
+        msg = f"⚠️ WARNING: Risk {risk*100:.0f}%."
+    else:
+        msg = f"✅ OPTIMAL (Risk {risk*100:.0f}%)."
+    return {
+        "machine_id": "M01",
+        "temperature": round(temp, 1),
+        "avg_temp": round(temp, 1),
+        "vibration": round(vib, 3),
+        "avg_vibration": round(vib, 3),
+        "humidity": round(hum, 1),
+        "avg_humidity": round(hum, 1),
+        "signal_strength": rssi,
+        "avg_rssi": rssi,
+        "failure_risk": round(risk, 3),
+        "timestamp": datetime.now().isoformat(),
+        "source": "SYNTHETIC",
+        "message": msg
+    }
+
 def get_machine_context():
     return "Current Status:\n" + "\n".join([
         f"Machine {m['machine_id']}: Temp {m['avg_temp']}C, Vib {m['avg_vibration']}g, Risk {m['failure_risk']*100}%, Status: {m['message']}"
@@ -83,10 +118,17 @@ def get_machine_context():
 @app.get("/")
 def root(): return {"status": "API running"}
 
+@app.get("/health")
+def health(): return {"status": "ok", "timestamp": datetime.now().isoformat()}
+
 @app.get("/machines")
 def get_machines():
     data = list(machines_col.find({"machine_id": "M01"}, {"_id": 0}))
     print(f"📡 [API] /machines called. Returning {len(data)} records (M01 Only).")
+    if not data:
+        # Hardware not connected — return synthetic demo data
+        print("🧩 [API] No real data found. Returning synthetic demo record.")
+        return [_gen_synthetic()]
     return data
 
 @app.post("/explain")

@@ -4,3 +4,5 @@ __pycache__/
 node_modules/
 build/
 dist/
+# Keep pipeline_model.joblib tracked for deployment
+!pipeline_model.joblib

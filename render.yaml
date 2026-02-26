@@ -1,0 +1,35 @@
+services:
+  # ─── Backend: FastAPI + Pathway + MongoDB ───────────────────────────────────
+  - type: web
+    name: predictive-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile.backend
+    dockerContext: .
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: MONGO_URI
+        sync: false          # set in Render dashboard
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: STREAM_URL
+        value: https://optical-readers-graphics-northeast.trycloudflare.com/stream
+    autoDeploy: true
+
+  # ─── Frontend: React (static) ───────────────────────────────────────────────
+  - type: web
+    name: predictive-frontend
+    runtime: docker
+    dockerfilePath: ./dashboard/Dockerfile
+    dockerContext: ./dashboard
+    plan: free
+    buildArgs:
+      - key: REACT_APP_API_URL
+        fromService:
+          name: predictive-backend
+          type: web
+          property: host
+          envVarKey: REACT_APP_API_URL
+    autoDeploy: true
